@@ -113,11 +113,10 @@ def load_data():
     df["Price"] = pd.to_numeric(df["Price"], errors="coerce")
     return df
 
-# Load data
 df = load_data()
 
 # ============================================================================
-# METRICS
+# BASIC METRICS
 # ============================================================================
 total_transactions = df['BillNo'].nunique()
 unique_customers = df['CustomerID'].nunique()
@@ -134,17 +133,7 @@ medium_baskets = (basket_sizes == 2).sum()
 large_baskets = (basket_sizes >= 3).sum()
 
 # ============================================================================
-# HEADER
-# ============================================================================
-st.markdown("""
-    <div style="background-color: white; padding: 40px; margin-bottom: 30px; border-radius: 12px; border-left: 6px solid #2E7D32; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <h1>📊 Market Basket Analysis</h1>
-        <p style="font-size: 20px; color: #555; margin-top: 10px;">Understanding Your Online Grocery Business</p>
-    </div>
-""", unsafe_allow_html=True)
-
-# ============================================================================
-# SIDEBAR FILTERS (INTERACTIVE)
+# SIDEBAR FILTERS
 # ============================================================================
 st.sidebar.header("🔎 Filter Your Data")
 
@@ -173,9 +162,24 @@ if customer_filter:
 filtered_df = filtered_df[(filtered_df["Price"] >= price_min) & (filtered_df["Price"] <= price_max)]
 
 # ============================================================================
+# HEADER
+# ============================================================================
+st.markdown("""
+    <div style="background-color: white; padding: 40px; margin-bottom: 30px; border-radius: 12px; border-left: 6px solid #2E7D32; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h1>📊 Market Basket Analysis</h1>
+        <p style="font-size: 20px; color: #555; margin-top: 10px;">Understanding Your Online Grocery Business</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# ============================================================================
 # TABS
 # ============================================================================
-tab1, tab2, tab3, tab4 = st.tabs(["🔍 KEY INSIGHTS", "🛒 PRODUCTS", "🤖 WHY AI/ML WORKS HERE", "🎯 FILTERS & RECOMMENDER"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🔍 KEY INSIGHTS",
+    "🛒 PRODUCTS",
+    "🤖 WHY AI/ML WORKS HERE",
+    "🎯 FILTERS & RECOMMENDER"
+])
 
 # ============================================================================
 # TAB 1: KEY INSIGHTS
@@ -201,9 +205,9 @@ with tab1:
     st.markdown("""
         <div class="insight-box">
             <h3 style="margin-top: 0; color: #1B5E20;">What This Means</h3>
-            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Strong Customer Base:</strong> With many customers, you have enough people shopping to identify real shopping patterns.</p>
-            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Consistent Shopping Habits:</strong> Customers buy multiple items per visit, showing predictable behavior patterns.</p>
-            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Good Product Mix:</strong> A variety of products means customers have choices, and we can see what they prefer.</p>
+            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Strong Customer Base:</strong> Enough shoppers to see real patterns.</p>
+            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Consistent Habits:</strong> Customers buy multiple items per visit.</p>
+            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Good Product Mix:</strong> Variety allows us to see preferences.</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -270,7 +274,7 @@ with tab3:
         st.divider()
 
 # ============================================================================
-# TAB 4: FILTERS & RECOMMENDER
+# TAB 4: FILTERS & RECOMMENDER (WITH SUPPORT / CONFIDENCE / LIFT)
 # ============================================================================
 with tab4:
     st.markdown("## 📄 Filtered Transactions")
@@ -283,26 +287,61 @@ with tab4:
         sorted(df["Itemname"].unique())
     )
 
-    # Build co-occurrence counts
-    co_occurrence = {}
-    for bill, items in df.groupby("BillNo")["Itemname"]:
-        items = list(items)
-        for item in items:
-            co_occurrence.setdefault(item, {})
-            for other in items:
-                if item != other:
-                    co_occurrence[item][other] = co_occurrence[item].get(other, 0) + 1
+    # Build transaction lists
+    transactions = df.groupby("BillNo")["Itemname"].apply(list)
 
-    if selected_product in co_occurrence and co_occurrence[selected_product]:
-        recommendations = sorted(
-            co_occurrence[selected_product].items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:5]
+    # Compute supports for single items
+    total_baskets = len(transactions)
+    item_support = {}
+    for items in transactions:
+        unique_items = set(items)
+        for item in unique_items:
+            item_support[item] = item_support.get(item, 0) + 1
+    for item in item_support:
+        item_support[item] /= total_baskets  # support(A)
+
+    # Compute pair counts
+    pair_counts = {}
+    for items in transactions:
+        unique_items = list(set(items))
+        for i in range(len(unique_items)):
+            for j in range(i + 1, len(unique_items)):
+                a, b = unique_items[i], unique_items[j]
+                pair_counts[(a, b)] = pair_counts.get((a, b), 0) + 1
+                pair_counts[(b, a)] = pair_counts.get((b, a), 0) + 1  # directional
+
+    # Build rules for selected product: selected_product -> other
+    rules = []
+    for (a, b), count_ab in pair_counts.items():
+        if a == selected_product:
+            support_ab = count_ab / total_baskets
+            support_a = item_support.get(a, 0)
+            support_b = item_support.get(b, 0)
+            if support_a > 0 and support_b > 0:
+                confidence = support_ab / support_a
+                lift = confidence / support_b
+                rules.append({
+                    "Product": b,
+                    "Support": support_ab,
+                    "Confidence": confidence,
+                    "Lift": lift
+                })
+
+    if rules:
+        rules_df = pd.DataFrame(rules).sort_values(
+            by=["Lift", "Confidence", "Support"],
+            ascending=False
+        ).head(10)
 
         st.markdown(f"### 🛒 Customers who buy **{selected_product}** also buy:")
-        for item, score in recommendations:
-            st.markdown(f"- **{item}** (together {score} times)")
+        st.dataframe(
+            rules_df.style.format({
+                "Support": "{:.3f}",
+                "Confidence": "{:.3f}",
+                "Lift": "{:.3f}"
+            }),
+            use_container_width=True
+        )
     else:
         st.info("Not enough data for recommendations yet.")
 
