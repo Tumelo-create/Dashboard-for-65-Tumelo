@@ -255,22 +255,32 @@ with tab3:
     st.markdown("## Why This Data is Perfect for AI and Machine Learning")
     st.markdown("Machine Learning models learn from data patterns. Your dataset has all the right ingredients for AI to help your business grow.")
 
-    factors_data = [
-        ("Transaction Volume", 85, "Many transactions provide sufficient data for pattern detection"),
-        ("Product Variety", 95, "Distinct products enable pattern discovery"),
-        ("Customer Base", 80, "A solid number of customers supports segmentation models"),
-        ("Purchase Patterns", 75, "Variable basket sizes reveal preferences"),
-        ("Price Diversity", 88, "A wide price range for prediction")
+     # Capability boxes
+    col1, col2, col3 = st.columns(3)
+    
+    capabilities = [
+        ("🛍️", "Product Recommendations", "If a customer buys bananas, the AI learns they often buy cereal too and suggests it next time."),
+        ("👥", "Customer Groups", "AI can identify which customers are similar, helping you send them offers they'll actually want."),
+        ("📈", "Sales Forecasting", "Based on past buying patterns, predict what products customers will want in the future."),
+        ("💰", "Profit Optimization", "Understand which products are usually bought together to bundle offers and increase sales."),
+        ("🎯", "Smart Pricing", "Learn what prices work best for different products and seasons to maximize revenue."),
+        ("📊", "Inventory Planning", "Predict demand more accurately so you stock the right amount of each item.")
     ]
-    for factor_name, strength, description in factors_data:
-        c1, c2, c3 = st.columns([2, 3, 1])
-        with c1:
-            st.markdown(f"<h4 style='color: #1B5E20; margin: 0;'>{factor_name}</h4>", unsafe_allow_html=True)
-        with c2:
-            st.progress(strength / 100)
-        with c3:
-            st.markdown(f"<h4 style='color: #333; margin: 0;'>{strength}%</h4>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size: 16px; color: #666; margin-top: -10px;'>{description}</p>", unsafe_allow_html=True)
+    
+    for idx, (emoji, title, description) in enumerate(capabilities):
+        if idx % 3 == 0:
+            col1, col2, col3 = st.columns(3)
+        
+        col = [col1, col2, col3][idx % 3]
+        
+        with col:
+            st.markdown(f"""
+                <div class="capability-box">
+                    <div style="font-size: 48px; margin-bottom: 12px;">{emoji}</div>
+                    <h3 style="margin-bottom: 10px; color: #1B5E20;">{title}</h3>
+                    <p style="font-size: 16px; color: #666; line-height: 1.6;">{description}</p>
+                </div>
+            """, unsafe_allow_html=True)
         st.divider()
 
 # ============================================================================
