@@ -132,3 +132,21 @@ def load_data():
     }
 
     return pd.DataFrame(data)
+
+
+# Calculate key metrics
+total_transactions = df['BillNo'].nunique()
+unique_customers = df['CustomerID'].nunique()
+unique_products = df['Itemname'].nunique()
+avg_items_per_transaction = df.groupby('BillNo')['Itemname'].count().mean()
+avg_transaction_value = df.groupby('BillNo')['Price'].sum().mean()
+total_revenue = df.groupby('BillNo')['Price'].sum().sum()
+
+# Product popularity
+product_popularity = df['Itemname'].value_counts().head(8)
+
+# Basket size distribution
+basket_sizes = df.groupby('BillNo')['Itemname'].count()
+small_baskets = (basket_sizes == 1).sum()
+medium_baskets = (basket_sizes == 2).sum()
+large_baskets = (basket_sizes >= 3).sum()
