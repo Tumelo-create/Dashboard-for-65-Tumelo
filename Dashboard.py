@@ -22,6 +22,10 @@ Design for adults 65+:
 import streamlit as st
 import pandas as pd
 import numpy as np
+source venv/bin/activate      # macOS/Linux
+venv\Scripts\activate         # Windows
+pip install plotly
+
 # ------------------------------
 # 1. PAGE CONFIGURATION (senior-friendly)
 # ------------------------------
