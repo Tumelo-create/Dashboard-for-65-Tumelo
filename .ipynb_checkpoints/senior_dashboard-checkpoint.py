@@ -20,31 +20,28 @@ from datetime import datetime
 # STREAMLIT PAGE CONFIGURATION
 # ============================================================================
 st.set_page_config(
-    page_title="Market Basket Analysis Dashboard",
+    page_title="Interactive Dashboard for Adults(65+)",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
 
 # ============================================================================
 # CUSTOM CSS FOR SENIOR ACCESSIBILITY
 # ============================================================================
 st.markdown("""
     <style>
-        /* Main container */
         .main {
             padding: 20px;
             background-color: #F5F5F5;
         }
-        
-        /* Headers - Large and clear */
         h1 {
             font-size: 48px !important;
             font-weight: 700 !important;
             color: #1B5E20 !important;
             margin-bottom: 10px !important;
         }
-        
         h2 {
             font-size: 32px !important;
             font-weight: 700 !important;
@@ -54,43 +51,33 @@ st.markdown("""
             padding-bottom: 12px !important;
             border-bottom: 3px solid #E8F5E9 !important;
         }
-        
         h3 {
             font-size: 24px !important;
             font-weight: 700 !important;
             color: #1B5E20 !important;
         }
-        
-        /* Body text - Large and readable */
         body, p, div, span, li {
             font-size: 18px !important;
             font-family: "Segoe UI", sans-serif !important;
             line-height: 1.8 !important;
             color: #333 !important;
         }
-        
-        /* High contrast backgrounds */
         .stMetric {
             background-color: #FAFAFA !important;
             border-left: 5px solid #2E7D32 !important;
             padding: 25px !important;
             border-radius: 8px !important;
         }
-        
-        /* Tab buttons - Large and accessible */
         .stTabs [data-baseweb="tab-list"] button {
             font-size: 18px !important;
             padding: 16px 28px !important;
             min-width: 180px !important;
             font-weight: 600 !important;
         }
-        
         .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
             background-color: #2E7D32 !important;
             color: white !important;
         }
-        
-        /* Insight boxes */
         .insight-box {
             background-color: #E8F5E9 !important;
             border: 2px solid #A5D6A7 !important;
@@ -98,8 +85,6 @@ st.markdown("""
             padding: 25px !important;
             margin: 20px 0 !important;
         }
-        
-        /* Capability boxes */
         .capability-box {
             background-color: #F0F7F0 !important;
             border: 2px solid #A5D6A7 !important;
@@ -107,8 +92,6 @@ st.markdown("""
             padding: 25px !important;
             text-align: center !important;
         }
-        
-        /* Summary box */
         .summary-box {
             background-color: #E3F2FD !important;
             border: 3px solid #2E7D32 !important;
@@ -124,21 +107,29 @@ st.markdown("""
 # ============================================================================
 @st.cache_data
 def load_data():
-    """Load and prepare the market basket dataset"""
-    # Create sample data matching the CSV
+    """Load and prepare the market basket dataset (robust to length mismatches)."""
     data = {
         'BillNo': [1000, 1000, 1000, 1000, 1004, 1005, 1005, 1005, 1008, 1008, 1008, 1011, 1012, 1013, 1013, 1013, 1013, 1013, 1013, 1013, 1021, 1021, 1021, 1024, 1024, 1024, 1027, 1027, 1027, 1027, 1027, 1027, 1033, 1033, 1035, 1035, 1035, 1038, 1038, 1038, 1038, 1042, 1042, 1044, 1044, 1044, 1044, 1044, 1049, 1049, 1049, 1049, 1049, 1054, 1054, 1056, 1056, 1056, 1056, 1056, 1056, 1056, 1063, 1063, 1063, 1066, 1066, 1066, 1066, 1066, 1066, 1066, 1073, 1073, 1075, 1076, 1076, 1076, 1076, 1076, 1076, 1082, 1082, 1082, 1082, 1086, 1086, 1088, 1088, 1088, 1088, 1088, 1088, 1088, 1088, 1088, 1088],
         'Itemname': ['Apples', 'Butter', 'Eggs', 'Potatoes', 'Oranges', 'Milk', 'Onions', 'Cereal', 'Tomatoes', 'Potatoes', 'Cereal', 'Bananas', 'Tomatoes', 'Pasta', 'Onions', 'Bread', 'Bananas', 'Coffee', 'Sugar', 'Potatoes', 'Oranges', 'Bananas', 'Potatoes', 'Chicken', 'Cereal', 'Bananas', 'Cheese', 'Pasta', 'Cereal', 'Onions', 'Bananas', 'Chicken', 'Sugar', 'Eggs', 'Onions', 'Cereal', 'Cheese', 'Cereal', 'Coffee', 'Bread', 'Onions', 'Chicken', 'Pasta', 'Eggs', 'Butter', 'Bananas', 'Chicken', 'Tomatoes', 'Tea', 'Bananas', 'Pasta', 'Eggs', 'Cereal', 'Sugar', 'Coffee', 'Apples', 'Tomatoes', 'Chicken', 'Pasta', 'Bread', 'Sugar', 'Potatoes', 'Yogurt', 'Butter', 'Bananas', 'Milk', 'Eggs', 'Sugar', 'Juice', 'Tomatoes', 'Butter', 'Onions', 'Coffee', 'Bananas', 'Onions', 'Coffee', 'Tea', 'Bananas', 'Onions', 'Juice', 'Pasta', 'Tea', 'Juice', 'Cereal', 'Butter', 'Yogurt', 'Juice', 'Pasta', 'Onions', 'Chicken', 'Tea', 'Juice', 'Potatoes', 'Sugar', 'Coffee', 'Milk', 'Tomatoes', 'Apples'],
         'Quantity': [5, 4, 4, 4, 2, 3, 3, 2, 5, 4, 3, 3, 1, 5, 1, 4, 2, 4, 5, 2, 3, 2, 4, 3, 1, 2, 5, 1, 5, 4, 3, 4, 4, 3, 4, 2, 2, 1, 2, 5, 1, 4, 1, 2, 5, 3, 1, 3, 5, 4, 3, 3, 5, 1, 5, 4, 3, 4, 1, 5, 1, 1, 3, 5, 2, 5, 2, 4, 1, 2, 3, 3, 5, 2, 1, 3, 4, 1, 4, 1, 5, 4, 1, 2, 4, 4, 4, 1, 4, 2, 4, 1, 1, 5, 3, 2],
         'Price': [8.3, 6.06, 2.66, 8.1, 7.26, 5.29, 8.75, 6.91, 2.62, 8.4, 8.68, 7.67, 8.45, 7.35, 7.97, 4.94, 3.4, 3.0, 4.93, 7.12, 6.47, 3.85, 2.58, 9.66, 9.7, 9.94, 9.26, 7.66, 3.98, 6.85, 8.84, 8.84, 9.11, 9.14, 8.41, 9.48, 7.82, 6.13, 1.96, 2.63, 8.41, 2.25, 9.13, 9.62, 5.32, 9.79, 5.39, 8.15, 4.91, 8.33, 2.55, 1.37, 3.69, 3.9, 9.93, 1.41, 4.78, 9.76, 2.04, 4.66, 2.81, 4.43, 7.41, 3.35, 2.67, 7.92, 4.5, 3.45, 4.14, 4.21, 8.92, 4.99, 1.73, 9.72, 2.63, 8.04, 1.21, 2.59, 2.93, 8.6, 6.16, 4.78, 3.67, 4.88, 1.04, 4.08, 1.9, 3.22, 7.43, 5.79, 5.76, 6.98, 7.5, 4.6, 3.63, 1.48, 5.24, 8.96],
-        'CustomerID': [52299, 11752, 16415, 22889, 52255, 54358, 73266, 46399, 22590, 47387, 26046, 20072, 79964, 83712, 68417, 25656, 13413, 71236, 91572, 59237, 32140, 63813, 30570, 12759, 29871, 33260, 20321, 99122, 49195, 72279, 11113, 71938, 72262, 68313, 64324, 84568, 53719, 32332, 42831, 63032, 15876, 37152, 12550, 17772, 35384, 40946, 54206, 34679, 26139, 76666, 63008, 26307, 78522, 86475, 16469, 42281, 42602, 46419, 10504, 50407, 45015, 77640, 50919, 73789, 33668, 45531, 38643, 85960, 23412, 30936, 71628, 26627, 46419, 34870, 84010, 65291, 43275, 74271, 93698, 94737, 51682, 38405, 62431, 52194, 53527, 53486, 74277, 55421, 41923, 58613, 85393, 73544, 38536, 49110, 43704, 56067, 60271, 98942]
+        'CustomerID': [52299, 11752, 16415, 22889, 52255, 54358, 73266, 46399, 22590, 47387, 26046, 20072, 79964, 83712, 68417, 25656, 13413, 71236, 91572, 59237, 32140, 63813, 30570, 12759, 29871, 33260, 20321, 99122, 49195, 72279, 11113, 71938, 72262, 68313, 64324, 84568, 53719, 32332, 42831, 63032, 15876, 37152, 12550, 17772, 35384, 40946, 54206, 34679, 26139, 76666, 63008, 26307, 78522, 86475, 16469, 42281, 42602, 46419, 10504, 50407, 45015, 77640, 50919, 73789, 33668, 45531, 38643, 85960, 23412, 30936, 71628, 26627, 46419, 34870, 84010, 65291, 43275, 74271, 93698, 94737, 51682, 38405, 62431, 52194, 53527, 53486, 74277, 55421, 41923, 58613, 85393, 73544, 38536, 49110, 43704, 56067, 60271, 98942, 43945]
     }
-    return pd.DataFrame(data)
 
-# Load data
+    # Make all columns the same length (robust against small mismatches)
+    min_len = min(len(col) for col in data.values())
+    for k in data:
+        data[k] = data[k][:min_len]
+
+    df = pd.DataFrame(data)
+    df["Price"] = pd.to_numeric(df["Price"], errors="coerce")
+    return df
+
 df = load_data()
 
-# Calculate key metrics
+# ============================================================================
+# BASIC METRICS
+# ============================================================================
 total_transactions = df['BillNo'].nunique()
 unique_customers = df['CustomerID'].nunique()
 unique_products = df['Itemname'].nunique()
@@ -146,14 +137,41 @@ avg_items_per_transaction = df.groupby('BillNo')['Itemname'].count().mean()
 avg_transaction_value = df.groupby('BillNo')['Price'].sum().mean()
 total_revenue = df.groupby('BillNo')['Price'].sum().sum()
 
-# Product popularity
 product_popularity = df['Itemname'].value_counts().head(8)
 
-# Basket size distribution
 basket_sizes = df.groupby('BillNo')['Itemname'].count()
 small_baskets = (basket_sizes == 1).sum()
 medium_baskets = (basket_sizes == 2).sum()
 large_baskets = (basket_sizes >= 3).sum()
+
+# ============================================================================
+# SIDEBAR FILTERS
+# ============================================================================
+st.sidebar.header("🔎 Filter Your Data")
+
+product_filter = st.sidebar.multiselect(
+    "Filter by Product",
+    options=sorted(df["Itemname"].unique()),
+)
+
+customer_filter = st.sidebar.multiselect(
+    "Filter by Customer ID",
+    options=sorted(df["CustomerID"].unique()),
+)
+
+price_min, price_max = st.sidebar.slider(
+    "Filter by Price",
+    float(df["Price"].min()),
+    float(df["Price"].max()),
+    (float(df["Price"].min()), float(df["Price"].max()))
+)
+
+filtered_df = df.copy()
+if product_filter:
+    filtered_df = filtered_df[filtered_df["Itemname"].isin(product_filter)]
+if customer_filter:
+    filtered_df = filtered_df[filtered_df["CustomerID"].isin(customer_filter)]
+filtered_df = filtered_df[(filtered_df["Price"] >= price_min) & (filtered_df["Price"] <= price_max)]
 
 # ============================================================================
 # HEADER
@@ -168,136 +186,79 @@ st.markdown("""
 # ============================================================================
 # TABS
 # ============================================================================
-tab1, tab2, tab3 = st.tabs(["🔍 KEY INSIGHTS", "🛒 PRODUCTS", "🤖 WHY AI/ML WORKS HERE"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🔍 KEY INSIGHTS",
+    "🛒 PRODUCTS",
+    "🤖 WHY AI/ML WORKS HERE",
+    "🎯 FILTERS & RECOMMENDER"
+])
 
 # ============================================================================
 # TAB 1: KEY INSIGHTS
 # ============================================================================
 with tab1:
     st.markdown("## Business at a Glance")
-    st.markdown("These numbers tell us about your grocery business's performance and customer behavior.")
-    
-    # Metric cards
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric(
-            label="Total Sales",
-            value=f"{total_transactions}",
-            delta="transactions",
-            delta_color="off"
-        )
+        st.metric("Total Sales", f"{total_transactions}", "transactions")
     with col2:
-        st.metric(
-            label="Customer Count",
-            value=f"{unique_customers}",
-            delta="unique shoppers",
-            delta_color="off"
-        )
+        st.metric("Customer Count", f"{unique_customers}", "unique shoppers")
     with col3:
-        st.metric(
-            label="Product Range",
-            value=f"{unique_products}",
-            delta="different items",
-            delta_color="off"
-        )
-    
+        st.metric("Product Range", f"{unique_products}", "different items")
+
     col4, col5, col6 = st.columns(3)
     with col4:
-        st.metric(
-            label="Average Sale",
-            value=f"${avg_transaction_value:.2f}",
-            delta="per transaction",
-            delta_color="off"
-        )
+        st.metric("Average Sale", f"${avg_transaction_value:.2f}", "per transaction")
     with col5:
-        st.metric(
-            label="Items Per Sale",
-            value=f"{avg_items_per_transaction:.1f}",
-            delta="on average",
-            delta_color="off"
-        )
+        st.metric("Items Per Sale", f"{avg_items_per_transaction:.1f}", "on average")
     with col6:
-        st.metric(
-            label="Total Revenue",
-            value=f"${total_revenue:.2f}",
-            delta="from sales",
-            delta_color="off"
-        )
-    
-    # Insight box
+        st.metric("Total Revenue", f"${total_revenue:.2f}", "from sales")
+
     st.markdown("""
         <div class="insight-box">
             <h3 style="margin-top: 0; color: #1B5E20;">What This Means</h3>
-            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Strong Customer Base:</strong> With 499 customers, you have enough people shopping to identify real shopping patterns.</p>
-            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Consistent Shopping Habits:</strong> Customers buy an average of 3.3 items per visit, showing predictable behavior patterns.</p>
-            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Good Product Mix:</strong> 19 different products mean customers have choices, and we can see what they prefer.</p>
+            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Strong Customer Base:</strong> Enough shoppers to see real patterns.</p>
+            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Consistent Habits:</strong> Customers buy multiple items per visit.</p>
+            <p style="font-size: 18px; color: #1B5E20;"><strong>✓ Good Product Mix:</strong> Variety allows us to see preferences.</p>
         </div>
     """, unsafe_allow_html=True)
-    
-    # Customer shopping patterns
+
     st.markdown("## Customer Shopping Patterns")
-    
     fig, ax = plt.subplots(figsize=(10, 6))
     sizes = [large_baskets, medium_baskets, small_baskets]
     labels = ['Frequent Shoppers\n(3+ items)', 'Moderate Shoppers\n(2 items)', 'Quick Shoppers\n(1 item)']
     colors = ['#2E7D32', '#558B2F', '#9CCC65']
-    
-    wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, autopct='%1.0f%%',
-                                        startangle=90, textprops={'fontsize': 16, 'weight': 'bold'})
-    
-    # Make percentage text white
+    wedges, texts, autotexts = ax.pie(
+        sizes, labels=labels, colors=colors, autopct='%1.0f%%',
+        startangle=90, textprops={'fontsize': 16, 'weight': 'bold'}
+    )
     for autotext in autotexts:
         autotext.set_color('white')
         autotext.set_fontsize(18)
         autotext.set_weight('bold')
-    
     st.pyplot(fig, use_container_width=True)
-    
-    st.markdown("""
-        <p style="font-size: 18px; color: #555; font-style: italic;">
-        Most customers (60%) buy multiple items at once, showing they're planning their shopping. 
-        This makes basket analysis valuable for recommendations.
-        </p>
-    """, unsafe_allow_html=True)
 
 # ============================================================================
 # TAB 2: PRODUCTS
 # ============================================================================
 with tab2:
     st.markdown("## Most Popular Products")
-    st.markdown("These are the items your customers buy most often. Understanding popularity helps predict future sales.")
-    
-    # Bar chart
     fig, ax = plt.subplots(figsize=(12, 6))
     products = product_popularity.index.tolist()
     purchases = product_popularity.values.tolist()
-    
     bars = ax.bar(products, purchases, color='#2E7D32', edgecolor='#1B5E20', linewidth=2)
-    
     ax.set_ylabel('Number of Purchases', fontsize=18, fontweight='bold')
     ax.set_xlabel('Product', fontsize=18, fontweight='bold')
     ax.tick_params(axis='both', labelsize=16)
     ax.grid(axis='y', alpha=0.3, linestyle='--')
-    
-    # Add value labels on bars
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height,
-                f'{int(height)}',
-                ha='center', va='bottom', fontsize=16, fontweight='bold')
-    
+                f'{int(height)}', ha='center', va='bottom',
+                fontsize=16, fontweight='bold')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    
     st.pyplot(fig, use_container_width=True)
-    
-    # Insight box
-    st.markdown("""
-        <div class="insight-box">
-            <p style="font-size: 18px; color: #1B5E20;"><strong>Top 3 Products:</strong> Bananas (37), Coffee (33), and Cereal (31) are your bestsellers. 
-            These items are bought together regularly, which is valuable for recommendations.</p>
-        </div>
-    """, unsafe_allow_html=True)
 
 # ============================================================================
 # TAB 3: WHY AI/ML WORKS HERE
@@ -305,38 +266,8 @@ with tab2:
 with tab3:
     st.markdown("## Why This Data is Perfect for AI and Machine Learning")
     st.markdown("Machine Learning models learn from data patterns. Your dataset has all the right ingredients for AI to help your business grow.")
-    
-    st.markdown("## Five Reasons AI Will Work For You")
-    
-    # ML Factor cards with strength bars
-    factors_data = [
-        ("Transaction Volume", 85, "153 transactions provide sufficient data for pattern detection"),
-        ("Product Variety", 95, "19 distinct products enable pattern discovery"),
-        ("Customer Base", 80, "499 customers support segmentation models"),
-        ("Purchase Patterns", 75, "Variable basket sizes reveal preferences"),
-        ("Price Diversity", 88, "Wide price range ($1.04-$9.94) for prediction")
-    ]
-    
-    for factor_name, strength, description in factors_data:
-        col1, col2, col3 = st.columns([2, 3, 1])
-        
-        with col1:
-            st.markdown(f"<h4 style='color: #1B5E20; margin: 0;'>{factor_name}</h4>", unsafe_allow_html=True)
-        
-        with col2:
-            # Progress bar
-            progress = strength / 100
-            st.progress(progress)
-        
-        with col3:
-            st.markdown(f"<h4 style='color: #333; margin: 0;'>{strength}%</h4>", unsafe_allow_html=True)
-        
-        st.markdown(f"<p style='font-size: 16px; color: #666; margin-top: -10px;'>{description}</p>", unsafe_allow_html=True)
-        st.divider()
-    
-    st.markdown("## What AI Can Do For You")
-    
-    # Capability boxes
+
+     # Capability boxes
     col1, col2, col3 = st.columns(3)
     
     capabilities = [
@@ -362,32 +293,79 @@ with tab3:
                     <p style="font-size: 16px; color: #666; line-height: 1.6;">{description}</p>
                 </div>
             """, unsafe_allow_html=True)
-    
-    st.markdown("## The Data Quality Checklist ✓")
-    
-    checklist_items = [
-        "Enough transactions (153) to train AI models",
-        "Diverse product range (19 items) showing varied customer choices",
-        "Real customer information (499 real shoppers)",
-        "Clear patterns (customers consistently buy 3+ items)",
-        "Price variation ($1.04 to $9.94) for modeling affordability",
-        "Purchase quantity data for demand predictions"
-    ]
-    
-    for item in checklist_items:
-        st.markdown(f"<p style='font-size: 18px; color: #333;'>✓ {item}</p>", unsafe_allow_html=True)
-    
-    st.markdown("""
-        <div class="summary-box">
-            <h2 style="margin-top: 0; color: #1B5E20;">Bottom Line</h2>
-            <p style="font-size: 18px; color: #333; line-height: 1.8; font-weight: 500;">
-                Your market basket dataset has high-quality, diverse, and consistent data. These are exactly 
-                the conditions AI and Machine Learning models need to learn useful patterns about your customers 
-                and help you make smarter business decisions. The models will help you sell more, keep customers 
-                happy, and reduce waste through better inventory planning.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
+        st.divider()
+
+# ============================================================================
+# TAB 4: FILTERS & RECOMMENDER (WITH SUPPORT / CONFIDENCE / LIFT)
+# ============================================================================
+with tab4:
+    st.markdown("## 📄 Filtered Transactions")
+    st.dataframe(filtered_df, use_container_width=True)
+
+    st.markdown("## 🤖 Product Recommendation Engine")
+
+    selected_product = st.selectbox(
+        "Choose a product to see what customers often buy with it:",
+        sorted(df["Itemname"].unique())
+    )
+
+    # Build transaction lists
+    transactions = df.groupby("BillNo")["Itemname"].apply(list)
+
+    # Compute supports for single items
+    total_baskets = len(transactions)
+    item_support = {}
+    for items in transactions:
+        unique_items = set(items)
+        for item in unique_items:
+            item_support[item] = item_support.get(item, 0) + 1
+    for item in item_support:
+        item_support[item] /= total_baskets  # support(A)
+
+    # Compute pair counts
+    pair_counts = {}
+    for items in transactions:
+        unique_items = list(set(items))
+        for i in range(len(unique_items)):
+            for j in range(i + 1, len(unique_items)):
+                a, b = unique_items[i], unique_items[j]
+                pair_counts[(a, b)] = pair_counts.get((a, b), 0) + 1
+                pair_counts[(b, a)] = pair_counts.get((b, a), 0) + 1  # directional
+
+    # Build rules for selected product: selected_product -> other
+    rules = []
+    for (a, b), count_ab in pair_counts.items():
+        if a == selected_product:
+            support_ab = count_ab / total_baskets
+            support_a = item_support.get(a, 0)
+            support_b = item_support.get(b, 0)
+            if support_a > 0 and support_b > 0:
+                confidence = support_ab / support_a
+                lift = confidence / support_b
+                rules.append({
+                    "Product": b,
+                    "Support": support_ab,
+                    "Confidence": confidence,
+                    "Lift": lift
+                })
+
+    if rules:
+        rules_df = pd.DataFrame(rules).sort_values(
+            by=["Lift", "Confidence", "Support"],
+            ascending=False
+        ).head(10)
+
+        st.markdown(f"### 🛒 Customers who buy **{selected_product}** also buy:")
+        st.dataframe(
+            rules_df.style.format({
+                "Support": "{:.3f}",
+                "Confidence": "{:.3f}",
+                "Lift": "{:.3f}"
+            }),
+            use_container_width=True
+        )
+    else:
+        st.info("Not enough data for recommendations yet.")
 
 # ============================================================================
 # FOOTER
