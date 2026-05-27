@@ -134,6 +134,9 @@ def load_data():
     return pd.DataFrame(data)
 
 
+# Load the data
+df = load_data()
+
 # Calculate key metrics
 total_transactions = df['BillNo'].nunique()
 unique_customers = df['CustomerID'].nunique()
